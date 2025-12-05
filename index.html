@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Requirements Checklist</title>
+    <meta name="description" content="Interactive checklist for API requirements with persistent state across sessions">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-color: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.25rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .checklist {
+            list-style: none;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .checklist-item:hover {
+            background: var(--bg-card-hover);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .checklist-item.checked {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-color: var(--success-color);
+        }
+        
+        .checkbox-wrapper {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .checklist-item:hover .checkmark {
+            border-color: #667eea;
+        }
+        
+        .checklist-item.checked .checkmark {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 7px;
+            top: 3px;
+            width: 6px;
+            height: 11px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        
+        .checklist-item.checked .checkmark:after {
+            display: block;
+            animation: checkAnim 0.3s ease;
+        }
+        
+        .item-text {
+            flex: 1;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+        
+        .checklist-item.checked .item-text {
+            color: var(--text-secondary);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes checkAnim {
+            0% {
+                transform: scale(0) rotate(45deg);
+            }
+            50% {
+                transform: scale(1.2) rotate(45deg);
+            }
+            100% {
+                transform: scale(1) rotate(45deg);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+            
+            .stats {
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>API Requirements Checklist</h1>
+            <p class="subtitle">Check API availability from backend provider</p>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="completedCount">0</div>
+                    <div class="stat-label">Available</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total APIs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="progressPercent">0%</div>
+                    <div class="stat-label">Coverage</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">👤</span>
+                User Management
+            </h2>
+            <ul class="checklist" id="userManagement">
+                <li class="checklist-item" data-id="user-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Create a user</span>
+                </li>
+                <li class="checklist-item" data-id="user-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Create a loyalty account for user</span>
+                </li>
+                <li class="checklist-item" data-id="user-3">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Update user profile data</span>
+                </li>
+                <li class="checklist-item" data-id="user-4">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user profile data</span>
+                </li>
+                <li class="checklist-item" data-id="user-5">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Check if a user exists</span>
+                </li>
+                <li class="checklist-item" data-id="user-6">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Delete a user's account</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Activity History
+            </h2>
+            <ul class="checklist" id="activityHistory">
+                <li class="checklist-item" data-id="activity-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's account's full history of activities (e.g. all points history, purchase history, coupons history) in one request</span>
+                </li>
+                <li class="checklist-item" data-id="activity-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Insert a full history of activities into the user's loyalty account, including the date each entry was created using the input-created date, not the current date (points history, purchase history, coupons history)</span>
+                </li>
+                <li class="checklist-item" data-id="activity-3">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Insert one activity for a user's account (points, purchases, coupons) using the input-created date</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">🎫</span>
+                Coupons Management
+            </h2>
+            <ul class="checklist" id="couponsManagement">
+                <li class="checklist-item" data-id="coupon-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get available coupons list</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get a coupon instance for a user with unique coupon ID</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-3">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Create a unique coupon for a user</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-4">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's active coupons list</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-5">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get a coupon's status (active or used)</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-6">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Delete a user's coupon</span>
+                </li>
+                <li class="checklist-item" data-id="coupon-7">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's coupon history</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⭐</span>
+                Points Management
+            </h2>
+            <ul class="checklist" id="pointsManagement">
+                <li class="checklist-item" data-id="points-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's current points</span>
+                </li>
+                <li class="checklist-item" data-id="points-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's points history</span>
+                </li>
+                <li class="checklist-item" data-id="points-3">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Add or subtract points from a user's account</span>
+                </li>
+                <li class="checklist-item" data-id="points-4">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Change account points to a desired value</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">🛒</span>
+                Purchase Management
+            </h2>
+            <ul class="checklist" id="purchaseManagement">
+                <li class="checklist-item" data-id="purchase-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get user's purchase history</span>
+                </li>
+                <li class="checklist-item" data-id="purchase-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get a purchase details</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⚙️</span>
+                System Configuration
+            </h2>
+            <ul class="checklist" id="systemConfig">
+                <li class="checklist-item" data-id="system-1">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get system configuration (points rules, reward rules)</span>
+                </li>
+                <li class="checklist-item" data-id="system-2">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Update system configuration (points rules, reward rules)</span>
+                </li>
+                <li class="checklist-item" data-id="system-3">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox">
+                        <span class="checkmark"></span>
+                    </div>
+                    <span class="item-text">Get version/status of services (health check)</span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" id="clearAll">Clear All</button>
+            <button class="btn btn-secondary" id="checkAll">Check All</button>
+        </div>
+        
+        <footer>
+            <p>API availability status is automatically saved and synced across all users via GitHub Pages</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Server API configuration
+        const API_URL = 'http://app2.nextgenvp.top:3000/api'; // Your backend server
+        
+        // State management
+        let checklistState = {};
+        let isLoading = false;
+        
+        // Get all checklist items
+        const items = document.querySelectorAll('.checklist-item');
+        const totalCount = items.length;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadState();
+            updateStats();
+            attachEventListeners();
+        });
+        
+        // Load state from server
+        async function loadState() {
+            isLoading = true;
+            
+            try {
+                const response = await fetch(`${API_URL}/state`);
+                if (response.ok) {
+                    checklistState = await response.json();
+                } else {
+                    // Fallback to localStorage if server is unavailable
+                    const localState = localStorage.getItem('apiChecklistState');
+                    if (localState) {
+                        checklistState = JSON.parse(localState);
+                    }
+                }
+            } catch (error) {
+                console.log('Server unavailable, using localStorage:', error);
+                // Fallback to localStorage
+                const localState = localStorage.getItem('apiChecklistState');
+                if (localState) {
+                    checklistState = JSON.parse(localState);
+                }
+            }
+            
+            // Apply state to UI
+            items.forEach(item => {
+                const id = item.getAttribute('data-id');
+                if (checklistState[id]) {
+                    item.classList.add('checked');
+                    item.querySelector('.checkbox').checked = true;
+                }
+            });
+            
+            isLoading = false;
+        }
+        
+        // Save state to server
+        async function saveState() {
+            if (isLoading) return;
+            
+            // Save to localStorage immediately (instant feedback)
+            localStorage.setItem('apiChecklistState', JSON.stringify(checklistState));
+            
+            // Save to server (syncs across users)
+            try {
+                const response = await fetch(`${API_URL}/state`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(checklistState)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ State synced to server');
+                } else {
+                    console.log('⚠️ Server sync failed, using localStorage only');
+                }
+            } catch (error) {
+                console.log('⚠️ Server unavailable, using localStorage only:', error);
+            }
+        }
+        
+        // Toggle item
+        function toggleItem(item) {
+            const id = item.getAttribute('data-id');
+            const checkbox = item.querySelector('.checkbox');
+            
+            if (item.classList.contains('checked')) {
+                item.classList.remove('checked');
+                checkbox.checked = false;
+                delete checklistState[id];
+            } else {
+                item.classList.add('checked');
+                checkbox.checked = true;
+                checklistState[id] = true;
+            }
+            
+            saveState();
+            updateStats();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const completed = Object.keys(checklistState).length;
+            const progress = Math.round((completed / totalCount) * 100);
+            
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('progressPercent').textContent = progress + '%';
+        }
+        
+        // Attach event listeners
+        function attachEventListeners() {
+            // Item click handlers
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        toggleItem(item);
+                    }
+                });
+                
+                const checkbox = item.querySelector('.checkbox');
+                checkbox.addEventListener('change', () => {
+                    toggleItem(item);
+                });
+            });
+            
+            // Clear all button
+            document.getElementById('clearAll').addEventListener('click', () => {
+                items.forEach(item => {
+                    item.classList.remove('checked');
+                    item.querySelector('.checkbox').checked = false;
+                });
+                checklistState = {};
+                saveState();
+                updateStats();
+            });
+            
+            // Check all button
+            document.getElementById('checkAll').addEventListener('click', () => {
+                items.forEach(item => {
+                    const id = item.getAttribute('data-id');
+                    item.classList.add('checked');
+                    item.querySelector('.checkbox').checked = true;
+                    checklistState[id] = true;
+                });
+                saveState();
+                updateStats();
+            });
+        }
+        
+        // Sync state periodically (every 10 seconds)
+        setInterval(async () => {
+            try {
+                const response = await fetch(`${API_URL}/state`);
+                if (response.ok) {
+                    const serverState = await response.json();
+                    
+                    // Only update if state changed
+                    if (JSON.stringify(serverState) !== JSON.stringify(checklistState)) {
+                        checklistState = serverState;
+                        
+                        // Update UI
+                        items.forEach(item => {
+                            const id = item.getAttribute('data-id');
+                            if (checklistState[id]) {
+                                item.classList.add('checked');
+                                item.querySelector('.checkbox').checked = true;
+                            } else {
+                                item.classList.remove('checked');
+                                item.querySelector('.checkbox').checked = false;
+                            }
+                        });
+                        
+                        updateStats();
+                        console.log('🔄 State synced from server');
+                    }
+                }
+            } catch (error) {
+                // Server unavailable, continue using local state
+            }
+        }, 10000); // Sync every 10 seconds
+    </script>
+</body>
+</html>
